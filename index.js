@@ -5,6 +5,7 @@ const {
   ActionRowBuilder, 
   ButtonBuilder, 
   ButtonStyle,
+  StringSelectMenuBuilder,
   ChannelType,
   PermissionsBitField
 } = require('discord.js');
@@ -31,13 +32,13 @@ client.on('messageCreate', async (message) => {
 
     const embed = new EmbedBuilder()
       .setTitle('📶🔥 HS WIFI 🔥📶')
-      .setDescription('🔥 **HS WIFI** 🔥')
+      .setDescription('🔥 Escolha seu plano abaixo')
       .setImage('https://media.discordapp.net/attachments/1482528899903782932/1484254280088027216/file_000000008530720eb8922a615208f883.png')
       .setColor(0x00ff88);
 
     const botao = new ButtonBuilder()
-      .setCustomId('comprar_wifi')
-      .setLabel('Comprar HS WIFI')
+      .setCustomId('abrir_wifi')
+      .setLabel('Selecionar Plano')
       .setStyle(ButtonStyle.Success);
 
     const row = new ActionRowBuilder().addComponents(botao);
@@ -49,24 +50,40 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// INTERAÇÃO
+// INTERAÇÕES
 client.on('interactionCreate', async (interaction) => {
 
+  // ABRIR MENU
+  if (interaction.isButton() && interaction.customId === 'abrir_wifi') {
+
+    const select = new StringSelectMenuBuilder()
+      .setCustomId('plano_wifi')
+      .setPlaceholder('Escolha seu plano')
+      .addOptions([
+        { label: '1 dia', description: 'R$15', value: '15' },
+        { label: '7 dias', description: 'R$40', value: '40' },
+        { label: '15 dias', description: 'R$45', value: '45' },
+        { label: '30 dias', description: 'R$60', value: '60' }
+      ]);
+
+    return interaction.reply({
+      content: '📦 Selecione seu plano:',
+      components: [new ActionRowBuilder().addComponents(select)],
+      ephemeral: true
+    });
+  }
+
   // CRIAR TICKET
-  if (interaction.isButton() && interaction.customId === 'comprar_wifi') {
+  if (interaction.isStringSelectMenu() && interaction.customId === 'plano_wifi') {
+
+    const valor = interaction.values[0];
 
     const canal = await interaction.guild.channels.create({
       name: `wifi-${interaction.user.username}`,
       type: ChannelType.GuildText,
       permissionOverwrites: [
-        {
-          id: interaction.guild.id,
-          deny: [PermissionsBitField.Flags.ViewChannel]
-        },
-        {
-          id: interaction.user.id,
-          allow: [PermissionsBitField.Flags.ViewChannel]
-        }
+        { id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
+        { id: interaction.user.id, allow: [PermissionsBitField.Flags.ViewChannel] }
       ]
     });
 
@@ -85,6 +102,8 @@ client.on('interactionCreate', async (interaction) => {
     const embedPix = new EmbedBuilder()
       .setTitle('💰 Pagamento HS WIFI')
       .setDescription(`
+💵 Valor: R$${valor}
+
 📲 Chave PIX:
 21983873874
 
